@@ -1,0 +1,29 @@
+version: "3"
+
+services:
+  db:
+    image: postgres:latest
+    environment:
+      POSTGRES_USER: myUser
+      POSTGRES_PASSWORD: myPassword
+      POSTGRES_DB: myDatabase
+    ports:
+      - "5432:5432"
+  mongo:
+    image: mongo:latest
+    # volumes:
+    #   - mongo_data:/data/db
+    ports:
+      - "27017:27017"
+
+  app:
+    image: my-app
+    build: .
+    ports:
+      - "3000:3000"
+    environment:
+      - MongoDB_URI=mongodb://root:devroot@mongo:27017/mydatabase?authSource=admin
+
+    depends_on:
+      - db
+      - mongo
