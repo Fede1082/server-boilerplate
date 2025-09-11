@@ -1,6 +1,7 @@
 {
   "scripts": {
-    "dev": "node ./src/server.js"
+    "start": "node ./src/index.js",
+    "dev": "nodemon ./src/index.js"
   },
   "dependencies": {
     "dotenv": "^17.2.2",
