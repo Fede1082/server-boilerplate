@@ -1,6 +1,21 @@
-version: "3"
+version: '3.9'
 
 services:
+  app:
+    build: .
+    ports:
+      - '3000:3000'
+    env_file: .env
+    depends_on:
+      db:
+        condition: service_started
+      mongo:
+        condition: service_healthy
+    volumes:
+      - ./:/usr/src/app
+      - /usr/src/app/node_modules
+    command: sh -c "npm install && npm run dev"
+
   db:
     image: postgres:latest
     environment:
@@ -8,22 +23,30 @@ services:
       POSTGRES_PASSWORD: myPassword
       POSTGRES_DB: myDatabase
     ports:
-      - "5432:5432"
+      - '5432:5432'
+    # Se vuoi aspettare la "salute" vera:
+    # healthcheck:
+    #   test: ["CMD-SHELL", "pg_isready -U $$POSTGRES_USER -d $$POSTGRES_DB"]
+    #   interval: 5s
+    #   timeout: 3s
+    #   retries: 5
+
   mongo:
-    image: mongo:latest
-    # volumes:
-    #   - mongo_data:/data/db
+    image: mongo:7
+    container_name: mongodb
     ports:
-      - "27017:27017"
-
-  app:
-    image: my-app
-    build: .
-    ports:
-      - "3000:3000"
+      - '27017:27017'
+    restart: unless-stopped
     environment:
-      - MongoDB_URI=mongodb://root:devroot@mongo:27017/mydatabase?authSource=admin
+      MONGO_INITDB_ROOT_USERNAME: ${MONGO_INITDB_ROOT_USERNAME}
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_INITDB_ROOT_PASSWORD}
+    healthcheck:
+      test: ['CMD', 'mongosh', '--eval', "db.adminCommand('ping')"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    volumes:
+      - mongo-data:/data/db
 
-    depends_on:
-      - db
-      - mongo
+volumes:
+  mongo-data:
